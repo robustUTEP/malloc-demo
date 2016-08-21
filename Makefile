@@ -1,8 +1,8 @@
-all: printfile
+all: myCat
 
-CFLAGS = -g -O0
+CFLAGS = -g -O2
 
-printfile: malloc-demo.o strcopy.o readlines.o
-	cc -o printfile malloc-demo.o strcopy.o readlines.o
+myCat: myCat.o strcopy.o readlines.o
+	cc -o myCat myCat.o strcopy.o readlines.o
 clean:
-	rm -f  *.o printfile*
+	rm -f  *.o myCat myCat.exe
