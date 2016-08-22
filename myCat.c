@@ -1,3 +1,4 @@
+// for puts
 #include <stdio.h>
 
 // for exit
@@ -7,6 +8,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+
+// for close
+#include <unistd.h>
 
 #include "readlines.h"
 #include "assert2.h"
