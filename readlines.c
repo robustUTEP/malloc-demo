@@ -1,11 +1,10 @@
-
 #include <sys/types.h>		/* for lseek, read */
+#include <unistd.h>		/* for lseek, read */
 #include <sys/stat.h>		/* for read */
 #include <fcntl.h>		/* for read */
-#include <unistd.h>		/* for read */
 #include <stdlib.h>		/* for malloc */
-
 #include <assert.h>		/* for assert */
+
 #include "assert2.h"		/* for assert2 */
 #include "strcopy.h"  		/* for strcopy */
 #include "readlines.h"		/* for consistency */
@@ -23,7 +22,7 @@ int countLines(int fd, int *pMaxLineLen) /* pMaxLineLen is an output variable */
 
   // read file one line at a time
   while(numBytesRead = read(fd, &buf, BUFLEN)) {
-    assert2(numBytesRead >= 0, "error reading file");
+    assert2(numBytesRead > 0, "error reading file");
     pBufLimit = buf + numBytesRead; // immediately following last byte read 
     for (pBuf = buf; pBuf != pBufLimit; pBuf++) { // ...every character in buf
       lastChar = *pBuf;
@@ -45,6 +44,7 @@ int countLines(int fd, int *pMaxLineLen) /* pMaxLineLen is an output variable */
 
 // Reads lines from open fd
 // Fd must be seekable
+// Returns 0 terminated vector of strings
 char **readLines(int fd)
 {
   int numBytesRead, numLines, maxLineLen, numLinesRead = 0;
@@ -52,11 +52,13 @@ char **readLines(int fd)
   char **lines, *lineBuf, **pLines, **pLinesLimit;
   off_t initialFileOffset;
 
-  /* save initial file offset */
+  // determine # of lines & maximum line len
   assert2((initialFileOffset = lseek(fd, 0, SEEK_CUR)) >= 0, 
+	  "fd must be seekable");  /* save initial file offset */
+  numLines = countLines(fd, &maxLineLen); 
+  /* re-set file offset  */
+  assert2(lseek(fd, initialFileOffset, SEEK_SET) == initialFileOffset,
 	  "fd must be seekable");
-
-  numLines = countLines(fd, &maxLineLen); // count number of lines & maximum line length
 
   /* allocate vector to store lines */
   lines = (char **)malloc(sizeof(char*) * (numLines + 1)); 
@@ -67,22 +69,19 @@ char **readLines(int fd)
   /* allocate line buffer */
   assert((lineBuf = (char *)malloc(maxLineLen+1)) != 0);
   
-  /* re-initialize file offset  */
-  assert2(lseek(fd, initialFileOffset, SEEK_SET) == initialFileOffset,
-	  "fd must be seekable");
-
+  /* read and copy lines from file into lines */
   for (pLines = lines; pLines < pLinesLimit; pLines++) { // for each line 
     char *pLineBuf = lineBuf;
     while(numBytesRead = read(fd, &readBuf, BUFLEN)) {
-      assert2(numBytesRead >= 0, "error reading input file");
+      assert2(numBytesRead > 0, "error reading input file");
       char *pReadBufLimit = readBuf + numBytesRead;
       for (pReadBuf = readBuf; pReadBuf != pReadBufLimit; pReadBuf++) {
 	lastChar = *pReadBuf;
-	if (lastChar == '\n') {	// end of line found
-	  *pLineBuf = 0;	// terminate line
-	  *(pLines++) = strcopy(lineBuf);
-	  pLineBuf = lineBuf;
-	} else
+	if (lastChar == '\n') {	// line terminator found
+	  *pLineBuf = 0;	// terminate copy in buffer
+	  *(pLines++) = strcopy(lineBuf); /* insert copy into lines[] */
+	  pLineBuf = lineBuf;	// reset lineBuf before reading next line
+	} else			/* otherwise just copy into lineBuf */
 	  *(pLineBuf++) = lastChar;
       }
       if (lastChar != '\n') {	// last line isn't terminated
