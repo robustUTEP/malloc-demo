@@ -3,6 +3,10 @@
 
 char *strcopy(char *inStr)	/* like strdup */
 {
+  // inStr is original string
+  // pStr indexes original string
+  // copy is new string
+  // pCopy indexes new string
   char *pStr, *copy, *pCopy;
   size_t len;
   for (pStr = inStr; *pStr; pStr++) // count # chars in str
