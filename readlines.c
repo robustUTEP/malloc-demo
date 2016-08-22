@@ -14,13 +14,14 @@
 
 // Count the number of lines in open file fd.
 // Also computes maximum line length
-int countLines(int fd, int *pMaxLineLen)
+int countLines(int fd, int *pMaxLineLen) /* pMaxLineLen is an output variable */
 {
   char buf[BUFLEN], *pBuf, *pBufLimit; /* read buffer */
   char lastChar;		       /* last character read */
   int numBytesRead;		       /* from last read */
   int numLines = 0, lineLen = 0, maxLineLen = 0;
-  
+
+  // read file one line at a time
   while(numBytesRead = read(fd, &buf, BUFLEN)) {
     assert2(numBytesRead >= 0, "error reading file");
     pBufLimit = buf + numBytesRead; // immediately following last byte read 
@@ -57,7 +58,7 @@ char **readLines(int fd)
 
   numLines = countLines(fd, &maxLineLen); // count number of lines & maximum line length
 
-  /* allocate vector to store words */
+  /* allocate vector to store lines */
   lines = (char **)malloc(sizeof(char*) * (numLines + 1)); 
   pLinesLimit = lines + numLines;
   assert2(lines != 0, "can't allocate memory to store vector of input lines");
@@ -77,15 +78,16 @@ char **readLines(int fd)
       char *pReadBufLimit = readBuf + numBytesRead;
       for (pReadBuf = readBuf; pReadBuf != pReadBufLimit; pReadBuf++) {
 	lastChar = *pReadBuf;
-	if (lastChar == '\n') {	// end of word found
-	  *pLineBuf = 0;	// terminate word 
+	if (lastChar == '\n') {	// end of line found
+	  *pLineBuf = 0;	// terminate line
 	  *(pLines++) = strcopy(lineBuf);
 	  pLineBuf = lineBuf;
 	} else
 	  *(pLineBuf++) = lastChar;
       }
       if (lastChar != '\n') {	// last line isn't terminated
-	*pLineBuf = 0;	// terminate word 
+	*pLineBuf = 0;	// terminate line
+	// need to copy line, otherwise *pLines will be same as lineBuf
 	*(pLines++) = strcopy(lineBuf);
       }	
     }
