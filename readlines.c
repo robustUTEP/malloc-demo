@@ -13,7 +13,8 @@
 
 // Count the number of lines in open file fd.
 // Also computes maximum line length
-int countLines(int fd, int *pMaxLineLen) /* pMaxLineLen is an output variable */
+// pMaxLineLen is pointer to an output variable
+int countLines(int fd, int *pMaxLineLen)
 {
   char buf[BUFLEN], *pBuf, *pBufLimit; /* read buffer */
   char lastChar;		       /* last character read */
